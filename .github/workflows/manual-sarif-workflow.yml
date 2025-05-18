@@ -1,0 +1,73 @@
+name: Manual SARIF Report Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Person to greet'
+        default: 'World'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  security-events: write  # SARIF 업로드를 위해 필요
+  actions: read
+
+jobs:
+  greet-and-generate-sarif:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Greeting
+        run: echo "Hello ${{ inputs.name }}"
+
+      - name: Prepare directories
+        run: |
+          mkdir -p ./security/reports
+          echo "✅ 디렉토리 ./security/reports 생성 완료"
+
+      - name: Generate Mock SARIF File
+        run: |
+          cat <<EOF > ./security/reports/mock-results.sarif
+          {
+            "version": "2.1.0",
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "runs": [
+              {
+                "tool": {
+                  "driver": {
+                    "name": "Manual-SARIF-Generator",
+                    "version": "1.0.0"
+                  }
+                },
+                "results": [
+                  {
+                    "ruleId": "mock-rule-001",
+                    "message": {
+                      "text": "This is a simulated SARIF issue for testing."
+                    },
+                    "locations": [
+                      {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "src/example.py"
+                          },
+                          "region": {
+                            "startLine": 10
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+          echo "✅ SARIF 파일 생성 완료"
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ./security/reports/mock-results.sarif
