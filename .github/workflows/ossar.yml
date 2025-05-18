@@ -27,10 +27,11 @@ jobs:
       - name: Install Oracle Instant Client
         run: |
           sudo apt-get update
-          sudo apt-get install -y libaio1 unzip wget
+          sudo apt-get install -y libaio-dev unzip wget
           wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip
           unzip instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip -d ~/oracle-client
           echo "LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_6" >> $GITHUB_ENV
+          echo "$HOME/oracle-client/instantclient_21_6" >> $GITHUB_PATH
           echo "✅ Oracle Instant Client 설치 완료"
 
       - name: Import SQL Files to Oracle DB
@@ -45,5 +46,5 @@ jobs:
           echo "Oracle 접속 시도: $ORACLE_USER@$ORACLE_HOST/$ORACLE_SID"
           for sqlfile in ~/oracle-slots/slot1/*.sql; do
             echo "▶ 실행 중: $sqlfile"
-            echo exit | ./sqlplus64 "$ORACLE_USER/$ORACLE_PASS@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$ORACLE_HOST)(PORT=1521))(CONNECT_DATA=(SID=$ORACLE_SID)))" @"$sqlfile"
+            echo exit | ./sqlplus "$ORACLE_USER/$ORACLE_PASS@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$ORACLE_HOST)(PORT=1521))(CONNECT_DATA=(SID=$ORACLE_SID)))" @"$sqlfile"
           done
