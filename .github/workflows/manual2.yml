@@ -1,0 +1,57 @@
+name: Manual Spring Boot Installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Your name'
+        required: true
+        default: 'Developer'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  install-and-run-springboot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Greeting
+        run: echo "👋 Hello ${{ inputs.name }}! Starting Spring Boot setup..."
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk unzip curl
+
+      - name: Setup Spring Boot Project (in user directory)
+        run: |
+          mkdir -p ~/springboot/slots/slot1
+          cd ~/springboot/slots/slot1
+          curl -o springboot-demo.zip https://start.spring.io/starter.zip \
+            -d dependencies=web \
+            -d type=gradle-project \
+            -d language=java \
+            -d baseDir=springboot-app
+          unzip springboot-demo.zip
+          echo "✅ Spring Boot demo project downloaded to slot1"
+
+      - name: Set Gradle Permission
+        run: |
+          chmod +x ~/springboot/slots/slot1/springboot-app/gradlew
+
+      - name: Build Spring Boot Project
+        run: |
+          cd ~/springboot/slots/slot1/springboot-app
+          ./gradlew build --no-daemon
+
+      - name: Organize Directory and Logs
+        run: |
+          mkdir -p ~/springboot/logs
+          echo "✅ 로그 디렉토리 및 슬롯 구조 완료"
+
+      - name: Display Directory Structure
+        run: |
+          echo "📁 디스크 슬롯 구조:"
+          ls -R ~/springboot
