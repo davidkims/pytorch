@@ -24,14 +24,14 @@ jobs:
           cp ./db/sql/*.sql ~/oracle-slots/slot1/
           echo "✅ 슬롯 디렉토리 및 SQL 파일 생성 완료"
 
-      - name: Install Oracle Instant Client
+      - name: Install Oracle Instant Client from Local Zip
         run: |
           sudo apt-get update
-          sudo apt-get install -y libaio-dev unzip wget
-          wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip
-          unzip instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip -d ~/oracle-client
-          echo "LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_6" >> $GITHUB_ENV
-          echo "$HOME/oracle-client/instantclient_21_6" >> $GITHUB_PATH
+          sudo apt-get install -y libaio-dev unzip
+          mkdir -p ~/oracle-client
+          unzip oracle-client/instantclient-basic-linux.x64-21.10.0.0.0dbru.zip -d ~/oracle-client
+          echo "LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_10" >> $GITHUB_ENV
+          echo "$HOME/oracle-client/instantclient_21_10" >> $GITHUB_PATH
           echo "✅ Oracle Instant Client 설치 완료"
 
       - name: Import SQL Files to Oracle DB
@@ -41,8 +41,8 @@ jobs:
           ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
           ORACLE_SID:  ${{ secrets.ORACLE_SID }}
         run: |
-          export PATH=$HOME/oracle-client/instantclient_21_6:$PATH
-          export LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_6
+          export PATH=$HOME/oracle-client/instantclient_21_10:$PATH
+          export LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_10
           echo "Oracle 접속 시도: $ORACLE_USER@$ORACLE_HOST/$ORACLE_SID"
           for sqlfile in ~/oracle-slots/slot1/*.sql; do
             echo "▶ 실행 중: $sqlfile"
