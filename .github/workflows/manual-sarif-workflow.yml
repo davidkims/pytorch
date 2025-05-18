@@ -11,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write  # SARIF 업로드를 위해 필요
+  security-events: write
   actions: read
 
 jobs:
@@ -22,12 +22,10 @@ jobs:
       - name: Send Greeting
         run: echo "Hello ${{ inputs.name }}"
 
-      - name: Prepare directories
-        run: |
-          mkdir -p ./security/reports
-          echo "✅ 디렉토리 ./security/reports 생성 완료"
+      - name: Create Output Directory
+        run: mkdir -p ./security/reports
 
-      - name: Generate Mock SARIF File
+      - name: Generate Valid SARIF File
         run: |
           cat <<EOF > ./security/reports/mock-results.sarif
           {
@@ -38,12 +36,14 @@ jobs:
                 "tool": {
                   "driver": {
                     "name": "Manual-SARIF-Generator",
-                    "version": "1.0.0"
+                    "version": "1.0.0",
+                    "informationUri": "https://example.com/tool"
                   }
                 },
                 "results": [
                   {
                     "ruleId": "mock-rule-001",
+                    "level": "warning",
                     "message": {
                       "text": "This is a simulated SARIF issue for testing."
                     },
@@ -51,10 +51,12 @@ jobs:
                       {
                         "physicalLocation": {
                           "artifactLocation": {
-                            "uri": "src/example.py"
+                            "uri": "src/example.py",
+                            "uriBaseId": "%SRCROOT%"
                           },
                           "region": {
-                            "startLine": 10
+                            "startLine": 10,
+                            "startColumn": 1
                           }
                         }
                       }
@@ -65,9 +67,8 @@ jobs:
             ]
           }
           EOF
-          echo "✅ SARIF 파일 생성 완료"
 
-      - name: Upload SARIF to GitHub Security
+      - name: Upload SARIF to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ./security/reports/mock-results.sarif
