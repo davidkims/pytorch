@@ -24,12 +24,15 @@ jobs:
           cp ./db/sql/*.sql ~/oracle-slots/slot1/
           echo "✅ 슬롯 디렉토리 및 SQL 파일 생성 완료"
 
-      - name: Install Oracle Instant Client from Local Zip
+      - name: Install Oracle Instant Client from external storage
         run: |
           sudo apt-get update
-          sudo apt-get install -y libaio-dev unzip
-          mkdir -p ~/oracle-client
-          unzip oracle-client/instantclient-basic-linux.x64-21.10.0.0.0dbru.zip -d ~/oracle-client
+          sudo apt-get install -y libaio-dev unzip wget
+          
+          # 👉 여기를 여러분의 실제 URL로 바꾸세요
+          curl -L -o instantclient.zip "https://storage.googleapis.com/YOUR_BUCKET/instantclient-basic-linux.zip"
+          
+          unzip instantclient.zip -d ~/oracle-client
           echo "LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_10" >> $GITHUB_ENV
           echo "$HOME/oracle-client/instantclient_21_10" >> $GITHUB_PATH
           echo "✅ Oracle Instant Client 설치 완료"
