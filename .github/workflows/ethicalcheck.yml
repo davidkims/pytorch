@@ -1,0 +1,47 @@
+name: EthicalCheck-Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '24 13 * * 4'  # 매주 목요일 오후 10:24 (KST)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  Trigger_EthicalCheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Prepare Directories
+        run: |
+          mkdir -p ./ethicalcheck/output
+          chmod 755 ./ethicalcheck
+          echo "✅ 폴더 생성 완료 및 권한 부여 완료"
+
+      - name: Download and Setup EthicalCheck Action Tooling (Optional)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+          echo "✅ 설치 패키지 준비 완료"
+
+      - name: EthicalCheck - Free API Security Testing
+        uses: apisec-inc/ethicalcheck-action@005fac321dd843682b1af6b72f30caaf9952c641
+        with:
+          oas-url: "https://yourdomain.com/openapi.json"
+          email: "kwonny1302@gmail.com"
+          sarif-result-file: "./ethicalcheck/output/ethicalcheck-results.sarif"
+
+      - name: Upload SARIF results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ./ethicalcheck/output/ethicalcheck-results.sarif
