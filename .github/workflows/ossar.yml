@@ -1,4 +1,4 @@
-name: Oracle SQL Import with Slot Structure
+name: Oracle SQL Import Workflow
 
 on:
   workflow_dispatch:
@@ -14,23 +14,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Oracle Slot Directories
+      - name: Create Slot Directories and Sample SQL Files
         run: |
           mkdir -p ~/oracle-slots/slot1
           mkdir -p ~/oracle-slots/slot2
+          mkdir -p ./db/sql
+          echo "CREATE TABLE test_table (id NUMBER PRIMARY KEY, name VARCHAR2(50));" > ./db/sql/create_tables.sql
+          echo "INSERT INTO test_table (id, name) VALUES (1, 'Tester');" > ./db/sql/seed_data.sql
           cp ./db/sql/*.sql ~/oracle-slots/slot1/
-          echo "✅ 슬롯 디렉토리 생성 및 SQL 배치 완료"
+          echo "✅ 슬롯 디렉토리 및 SQL 파일 생성 완료"
 
-      - name: Install Oracle Client (Instant Client)
+      - name: Install Oracle Instant Client
         run: |
           sudo apt-get update
-          sudo apt-get install -y libaio1 wget unzip
+          sudo apt-get install -y libaio1 unzip wget
           wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip
-          unzip instantclient-basiclite-linux.x64-*.zip -d ~/oracle-client
+          unzip instantclient-basiclite-linux.x64-21.6.0.0.0dbru.zip -d ~/oracle-client
           echo "LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_6" >> $GITHUB_ENV
           echo "✅ Oracle Instant Client 설치 완료"
 
-      - name: Import SQL files to Oracle DB
+      - name: Import SQL Files to Oracle DB
         env:
           ORACLE_USER: ${{ secrets.ORACLE_USER }}
           ORACLE_PASS: ${{ secrets.ORACLE_PASS }}
@@ -39,8 +42,8 @@ jobs:
         run: |
           export PATH=$HOME/oracle-client/instantclient_21_6:$PATH
           export LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_6
-          echo "Connecting to Oracle: $ORACLE_USER@$ORACLE_HOST/$ORACLE_SID"
+          echo "Oracle 접속 시도: $ORACLE_USER@$ORACLE_HOST/$ORACLE_SID"
           for sqlfile in ~/oracle-slots/slot1/*.sql; do
-            echo "▶ 실행: $sqlfile"
+            echo "▶ 실행 중: $sqlfile"
             echo exit | ./sqlplus64 "$ORACLE_USER/$ORACLE_PASS@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$ORACLE_HOST)(PORT=1521))(CONNECT_DATA=(SID=$ORACLE_SID)))" @"$sqlfile"
           done
