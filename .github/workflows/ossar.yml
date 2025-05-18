@@ -24,15 +24,15 @@ jobs:
           cp ./db/sql/*.sql ~/oracle-slots/slot1/
           echo "✅ 슬롯 디렉토리 및 SQL 파일 생성 완료"
 
-      - name: Install Oracle Instant Client from external source
+      - name: Install Oracle Instant Client from GCS
         run: |
           sudo apt-get update
           sudo apt-get install -y libaio-dev unzip wget
 
           echo "📦 Oracle Client 다운로드 중..."
-          curl -L -o instantclient.zip "https://storage.googleapis.com/YOUR_BUCKET/instantclient.zip"
+          curl -L -o instantclient.zip "https://storage.googleapis.com/YOUR_BUCKET_NAME/instantclient.zip"
 
-          echo "🔍 파일 확인:"
+          echo "🔍 파일 유형:"
           file instantclient.zip || true
 
           echo "📂 압축 테스트:"
@@ -41,7 +41,7 @@ jobs:
           unzip instantclient.zip -d ~/oracle-client
           echo "LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_10" >> $GITHUB_ENV
           echo "$HOME/oracle-client/instantclient_21_10" >> $GITHUB_PATH
-          echo "✅ Oracle Instant Client 압축 해제 및 경로 설정 완료"
+          echo "✅ Oracle Instant Client 설치 완료"
 
       - name: Import SQL Files to Oracle DB
         env:
@@ -54,7 +54,6 @@ jobs:
           export LD_LIBRARY_PATH=$HOME/oracle-client/instantclient_21_10
 
           echo "🟢 Oracle 접속 시도: $ORACLE_USER@$ORACLE_HOST/$ORACLE_SID"
-
           for sqlfile in ~/oracle-slots/slot1/*.sql; do
             echo "▶ 실행 중: $sqlfile"
             echo exit | sqlplus "$ORACLE_USER/$ORACLE_PASS@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$ORACLE_HOST)(PORT=1521))(CONNECT_DATA=(SID=$ORACLE_SID)))" @"$sqlfile"
