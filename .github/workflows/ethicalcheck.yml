@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '24 13 * * 4'  # 매주 목요일 오후 10:24 (KST)
+    - cron: '24 13 * * 4'  # 매주 목요일 오후 10:24 (KST 기준)
   workflow_dispatch:
 
 permissions:
@@ -25,23 +25,30 @@ jobs:
       - name: Prepare Directories
         run: |
           mkdir -p ./ethicalcheck/output
-          chmod 755 ./ethicalcheck
-          echo "✅ 폴더 생성 완료 및 권한 부여 완료"
+          chmod -R 755 ./ethicalcheck
+          echo "✅ 디렉토리 생성 및 권한 설정 완료"
 
-      - name: Download and Setup EthicalCheck Action Tooling (Optional)
+      - name: Install Required Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl unzip
-          echo "✅ 설치 패키지 준비 완료"
+          sudo apt-get install -y jq curl unzip
 
       - name: EthicalCheck - Free API Security Testing
         uses: apisec-inc/ethicalcheck-action@005fac321dd843682b1af6b72f30caaf9952c641
         with:
-          oas-url: "https://yourdomain.com/openapi.json"
+          oas-url: "https://petstore.swagger.io/v2/swagger.json"  # ✅ 실제 API 문서 경로로 교체 가능
           email: "kwonny1302@gmail.com"
           sarif-result-file: "./ethicalcheck/output/ethicalcheck-results.sarif"
 
-      - name: Upload SARIF results to GitHub Security tab
+      - name: Check SARIF Output
+        run: |
+          if [ ! -s "./ethicalcheck/output/ethicalcheck-results.sarif" ]; then
+            echo "❌ SARIF 파일이 비어있습니다. upload-sarif 생략됨."
+            exit 1
+          fi
+          echo "✅ SARIF 파일이 생성되었습니다."
+
+      - name: Upload SARIF to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ./ethicalcheck/output/ethicalcheck-results.sarif
