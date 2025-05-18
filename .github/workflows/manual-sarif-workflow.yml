@@ -11,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write  # SARIF 업로드에 필요
+  security-events: write
   actions: read
 
 jobs:
@@ -30,45 +30,48 @@ jobs:
       - name: Generate Valid SARIF File
         run: |
           cat <<EOF > ./security/reports/mock-results.sarif
-          {
-            "version": "2.1.0",
-            "\$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-            "runs": [
-              {
-                "tool": {
-                  "driver": {
-                    "name": "Manual-SARIF-Generator",
-                    "version": "1.0.0",
-                    "informationUri": "https://example.com/tool"
-                  }
+{
+  "version": "2.1.0",
+  "\$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Manual-SARIF-Generator",
+          "version": "1.0.0",
+          "informationUri": "https://example.com/tool"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "mock-rule-001",
+          "level": "warning",
+          "message": {
+            "text": "This is a simulated SARIF issue for testing."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/example.py",
+                  "uriBaseId": "%SRCROOT%"
                 },
-                "results": [
-                  {
-                    "ruleId": "mock-rule-001",
-                    "level": "warning",
-                    "message": {
-                      "text": "This is a simulated SARIF issue for testing."
-                    },
-                    "locations": [
-                      {
-                        "physicalLocation": {
-                          "artifactLocation": {
-                            "uri": "src/example.py",
-                            "uriBaseId": "%SRCROOT%"
-                          },
-                          "region": {
-                            "startLine": 10,
-                            "startColumn": 1
-                          }
-                        }
-                      }
-                    ]
-                  }
-                ]
+                "region": {
+                  "startLine": 10,
+                  "startColumn": 1
+                }
               }
-            ]
-          }
-          EOF
-          echo "✅ SARIF 파일 생성 완료: ./security/reports/mock-results.sarif"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+EOF
+          echo "✅ SARIF 파일 생성 완료"
 
-      - name: Upload SARIF to GitHu
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ./security/reports/mock-results.sarif
